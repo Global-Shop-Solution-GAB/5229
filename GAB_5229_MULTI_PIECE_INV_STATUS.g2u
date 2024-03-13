@@ -1,0 +1,762 @@
+Program.Sub.ScreenSU.Start
+Gui.F_MULT_PC_INV_STATUS..Create
+Gui.F_MULT_PC_INV_STATUS..Size(20535,12270)
+Gui.F_MULT_PC_INV_STATUS..MinX(0)
+Gui.F_MULT_PC_INV_STATUS..MinY(0)
+Gui.F_MULT_PC_INV_STATUS..Position(0,0)
+Gui.F_MULT_PC_INV_STATUS..BackColor(-2147483633)
+Gui.F_MULT_PC_INV_STATUS..MousePointer(0)
+Gui.F_MULT_PC_INV_STATUS..Event(UnLoad,F_MULT_PC_INV_STATUS_UnLoad)
+Gui.F_MULT_PC_INV_STATUS..Caption("Inventory Status")
+Gui.F_MULT_PC_INV_STATUS..Event(Resize,F_MULT_PC_INV_STATUS_Resize)
+Gui.F_MULT_PC_INV_STATUS.picGSLogo.Create(PictureBox)
+Gui.F_MULT_PC_INV_STATUS.picGSLogo.Size(4110,1260)
+Gui.F_MULT_PC_INV_STATUS.picGSLogo.Position(7905,300)
+Gui.F_MULT_PC_INV_STATUS.picGSLogo.Anchor(1)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Create(Tab)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Size(20400,10650)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Position(10,1335)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Event(Click,tabGrids_Click)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Tabs(2)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.SetTab(1)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Caption("Standard")
+Gui.F_MULT_PC_INV_STATUS.tabGrids.SetTab(0)
+Gui.F_MULT_PC_INV_STATUS.tabGrids.Caption("MultiPiece")
+Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Create(GsGridControl)
+Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Size(20320,10245)
+Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Position(0,0)
+Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Event(RowCellClick,GSGCMULTPCINVSTATUS_RowCellClick)
+Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Parent("tabGrids",0)
+Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Create(GsGridControl)
+Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Size(20320,10245)
+Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Position(0,0)
+Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Event(RowCellClick,GSGCSTANDARDINVSTATUS_RowCellClick)
+Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Parent("tabGrids",1)
+Program.Sub.ScreenSU.End
+
+Program.Sub.Preflight.Start
+Program.Sub.Preflight.End
+
+Program.Sub.Main.Start
+'Function.Intrinsic.Debug.BenchmarkModeEnable
+
+'local
+V.Local.sIcon.Declare
+v.Local.sLogo.Declare
+V.Local.sGssLogo.Declare
+
+'global
+V.Global.sProductLine.Declare
+
+f.Intrinsic.UI.InvokeWaitDialog("Processing...","Multi Piece Inv Status")
+
+'set form Icon
+F.Intrinsic.String.Build("{0}\Art\gss2.ico",V.Caller.GlobalDir,v.Local.sIcon)
+F.Intrinsic.String.Build("{0}\Art\GAB_GSS_Logo_Green_Dash.png",V.Caller.GlobalDir,v.Local.sLogo)
+Gui.F_MULT_PC_INV_STATUS..Icon(V.Local.sIcon)
+Gui.F_MULT_PC_INV_STATUS.picGSLogo.Picture(V.Local.sLogo)
+
+'open connection
+f.ODBC.Connection!conx.openconnection(v.Ambient.PDSN,v.Ambient.PUser,v.Ambient.PPass)
+
+'Function.Intrinsic.Debug.InvokeDebugger
+
+'call subs
+f.Intrinsic.UI.InvokeWaitDialog("Processing...","Multi Piece Inv Status")
+f.Intrinsic.UI.ChangeWaitStatus("Getting Sales Order Info...",1.5,0,10)
+f.Intrinsic.Control.CallSub(Load_dtOrderReqs)
+f.Intrinsic.UI.ChangeWaitStatus("Getting Onhand Info...",3,0,10)
+f.Intrinsic.Control.CallSub(Load_dtOnhand)
+f.Intrinsic.UI.ChangeWaitStatus("Getting Work Order Info...",4.5,0,10)
+f.Intrinsic.Control.CallSub(Load_dtWoSupply)
+f.Intrinsic.Control.CallSub(Load_dtWoReqs)
+f.Intrinsic.UI.ChangeWaitStatus("Joining Data...",6,0,10)
+f.Intrinsic.Control.CallSub(merge_DTs)
+f.Intrinsic.Control.CallSub(load_dtstdinvstatus)
+f.Intrinsic.UI.ChangeWaitStatus("Adding Columns...",7.5,0,10)
+f.Intrinsic.Control.CallSub(Additional_Columns)
+F.Intrinsic.UI.ChangeWaitStatus("Loading Grid...",9,0,10)
+f.Intrinsic.Control.CallSub(format_GSGCMULTPCINVSTATUS)
+f.Intrinsic.Control.CallSub(format_GSGCSTANDARDINVSTATUS)
+f.Intrinsic.Control.CallSub(Set_Context_Menus)
+f.Intrinsic.Control.CallSub(Deserialize)
+gui.F_MULT_PC_INV_STATUS..Visible(true)
+
+'close connection
+f.ODBC.Connection!conx.Close
+
+Program.Sub.Main.End
+
+Program.Sub.F_MULT_PC_INV_STATUS_UnLoad.Start
+f.Intrinsic.Control.CallSub(Serialize)
+F.Intrinsic.Control.End
+
+Program.Sub.F_MULT_PC_INV_STATUS_UnLoad.End
+
+Program.Sub.Get_Product_Line.Start
+''local
+'V.Local.sSQL.Declare
+'v.Local.sReturn.Declare
+
+''set browser string
+'v.Local.sSQL.Set("Select Product_line, Product_line_name from V_Product_line")
+''prompt user to select PL from browser
+'f.Intrinsic.UI.Browser("PL","conx",v.Local.sSQL,"PL*!*PL Descr","80*!*200",v.Local.sReturn)
+''grab product line from return
+'f.Intrinsic.String.Split(v.Local.sReturn,"*!*",v.Local.sReturn)
+'v.Global.sProductLine.Set(v.Local.sReturn(0))
+Program.Sub.Get_Product_Line.End
+
+Program.Sub.Load_dtOrderReqs.Start
+v.Local.sSQL.Declare
+
+'set sql statement with Product Line.
+f.Intrinsic.String.Build("select rtrim(Part) as Part, rtrim(Location) as Location, rtrim(USER_2) + '-' + rtrim(USER_3) AS lngth, IF(rtrim(USER_2) = '','0',rtrim(USER_2)) AS lengthft,IF(rtrim(USER_3) = '','0',rtrim(USER_3)) AS lengthin, sum(qty_bo) as qty_reqd from v_order_lines where product_line IN ('01','06','07') and rtrim(user_1) <> '' group by part, location, lengthft, lengthin, lngth",v.Global.sProductLine,v.Local.sSQL)
+
+'create DT - R
+F.Data.DataTable.CreateFromSQL("dtOrderReqs","conx",v.Local.sSQL,True)
+f.Data.DataTable.AddExpressionColumn("dtOrderReqs","DecimalLength",Float,"(CONVERT(lengthft,'System.Decimal')+(convert(lengthin,'System.Decimal')/12))")
+f.Data.DataTable.AddExpressionColumn("dtOrderReqs","qty_reqdNoNull",Long,"ISNULL(qty_reqd,0)")
+'f.Data.DataTable.RemoveColumn("dtOrderReqs","lengthft")
+'f.Data.DataTable.RemoveColumn("dtOrderReqs","lengthin")
+f.Data.DataTable.SetPK("dtOrderReqs","Part","Location","lngth","lengthft","lengthin")
+
+Program.Sub.Load_dtOrderReqs.End
+
+Program.Sub.Load_dtOnhand.Start
+v.Local.sSQL.Declare
+v.Local.sFilter.Declare
+'Function.Intrinsic.Debug.InvokeDebugger
+'Function.Intrinsic.Debug.Stop
+
+'set sql statement with Product Line.
+f.Intrinsic.String.Build("select rtrim(vim.Part) as Part, rtrim(vim.Location) as Location,rtrim(serial_number) as lngth, IF((Left(rtrim(serial_number),Position('-',serial_number)-1)) = '','0',(Left(rtrim(serial_number),Position('-',serial_number)-1))) as lengthft, IF((Right(rtrim(serial_number),Length(serial_number)-Position('-',serial_number))) = '','0',(Right(rtrim(serial_number),Length(serial_number)-Position('-',serial_number)))) as lengthin, sum(vim.quantity) as on_hand from v_item_master vim WHERE VIM.ALLOCATED <> 'Y' and position('-',serial_number) <> 0 and quantity <> 0 group by Part, Location,lengthft,lengthin,lngth;",v.Global.sProductLine,v.Local.sSQL)
+
+'create DT - H
+F.Data.DataTable.CreateFromSQL("dtOnhandAll","conx",v.Local.sSQL,True)
+
+'Add columns for fill from dictionary key
+f.Data.DataTable.AddColumn("dtOnhandAll","Product_line","String")
+f.Data.DataTable.AddExpressionColumn("dtOnhandAll","PartLocation","String","Part + Location")
+
+'create product line dictionary for filtering
+f.Intrinsic.String.Build("select concat(rtrim(Part),rtrim(Location)) Loc, Product_Line from v_inventory_all where product_line IN ('01','06','07');",v.Global.sProductLine,v.Local.sSQL)
+f.Data.Dictionary.CreateFromSQL("dictProductLine","conx",v.Local.sSQL)
+f.Data.DataTable.FillFromDictionary("dtOnhandAll","dictProductLine","PartLocation","Product_Line")
+f.Data.Dictionary.Close("dictProductLine")
+
+'build DT filter string to get rid of 0 on hand and product line not equal to selected one
+v.Local.sFilter.Set("on_hand > 0.00 and product_line IN ('01','06','07') and len(lengthft) < 3 and lengthft <= '99'")
+
+'create DV to filter out 0 records and records that don't match PL selected
+f.Data.DataView.Create("dtOnhandAll","dvOnhand",22,v.Local.sFilter,"")
+f.Data.DataView.ToDataTable("dtOnhandAll","dvOnhand","dtOnhand",True)
+'Add columns for fill from dictionary key
+f.Data.DataTable.AddExpressionColumn("dtOnhand","DecimalLength",Float,"(CONVERT(lengthft,'System.Decimal')+(convert(lengthin,'System.Decimal')/12))")
+f.Data.DataTable.AddExpressionColumn("dtOnhand","on_handNoNull",Long,"ISNULL(on_hand,0)")
+
+f.Data.DataTable.RemoveColumn("dtOnhand","PartLocation")
+f.Data.DataTable.RemoveColumn("dtOnhand","Product_Line")
+f.Data.DataTable.SetPK("dtOnhand","Part","Location","lngth","lengthft","lengthin")
+f.Data.DataTable.Close("dtOnhandAll")
+
+Program.Sub.Load_dtOnhand.End
+
+Program.Sub.Load_dtWoSupply.Start
+v.Local.sSQL.Declare
+'Function.Intrinsic.Debug.InvokeDebugger
+'Function.Intrinsic.Debug.Stop
+
+'set sql statement
+f.Intrinsic.String.Build("Select ISNULL(rtrim(vjh.part),'') as Part, ISNULL(rtrim(vjh.location),'') as Location, ISNULL(concat(vmp.length_ft,concat('-',vmp.length_in)),'') as lngth, rtrim(cast(vmp.length_ft as char(3))) as lengthft, rtrim(cast(vmp.length_in as char(2))) as lengthin, sum(vmp.total_ft) as qty_wo from v_job_header vjh left join gab_4474_multi_pc_wo vmp on rtrim(vjh.job) = rtrim(vmp.job) and rtrim(vjh.suffix) = rtrim(vmp.suffix) where vjh.date_closed = '1900-01-01' and vjh.product_line IN ('01','06','07') and IsNull(vmp.length_ft,'0') <> '0' group by part, location, lengthft, lengthin, lngth;",v.Global.sProductLine,v.Local.sSQL)
+
+'create DT - W
+f.Data.DataTable.CreateFromSQL("dtWOqty","conx",v.Local.sSQL,True)
+f.Data.DataTable.AddExpressionColumn("dtWOqty","DecimalLength",Float,"(CONVERT(lengthft,'System.Decimal')+(convert(lengthin,'System.Decimal')/12))")
+f.Data.DataTable.AddExpressionColumn("dtWOqty","qty_woNoNull",Long,"ISNULL(qty_wo,0)")
+f.Data.DataTable.SetPK("dtWOqty","Part","Location","lngth","lengthft","lengthin")
+
+
+Program.Sub.Load_dtWoSupply.End
+
+Program.Sub.Load_dtWoReqs.Start
+Program.Sub.Load_dtWoReqs.End
+
+Program.Sub.merge_DTs.Start
+v.Local.sColumns.Declare
+'Function.Intrinsic.Debug.InvokeDebugger
+'Function.Intrinsic.Debug.Stop
+
+
+'Create blank inv status multi piece DT
+f.Data.DataTable.Create("dtInvStatus",True)
+
+'Merge existing qty DT's into inv Status blank using primary keys.  False fills in values.  True does not fill in properly.
+f.Data.DataTable.Merge("dtOnhand","dtInvStatus",False,4)
+f.Data.DataTable.Merge("dtWOqty","dtInvStatus",False,4)
+f.Data.DataTable.Merge("dtOrderReqs","dtInvStatus",False,4)
+
+
+Program.Sub.merge_DTs.End
+
+Program.Sub.Additional_Columns.Start
+v.Local.sSQL.Declare
+'Function.Intrinsic.Debug.InvokeDebugger
+'Function.Intrinsic.Debug.Stop
+
+'Add expression columns for Net and Available quantities and pieces.  Net is (On hand - Requirements + On work order), Available is (On hand - Requirements).  Pieces is qty/decimal format feet per piece.
+f.Data.DataTable.AddExpressionColumn("dtInvStatus","Net",Long,"Convert(ISNULL(ON_HAND,0),'System.Decimal')-Convert(ISNULL(QTY_REQD,0),'System.Decimal')+Convert(ISNULL(QTY_WO,0),'System.Decimal')")
+f.Data.DataTable.AddExpressionColumn("dtInvStatus","Available",Long,"Convert(ISNULL(ON_HAND,0),'System.Decimal')-Convert(ISNULL(QTY_REQD,0),'System.Decimal')")
+f.Data.DataTable.AddExpressionColumn("dtInvStatus","NetPieces",Long,"convert(Net/DecimalLength,'System.Int32')")
+f.Data.DataTable.AddExpressionColumn("dtInvStatus","AvailablePieces",Long,"convert(Available/DecimalLength,'System.Int32')")
+
+'Add Description
+f.Data.DataTable.AddExpressionColumn("dtInvStatus","PartLocation",String,"IsNull(trim(Part),'')+IsNull(trim(Location),'')")
+f.Data.DataTable.AddColumn("dtInvStatus","Description",String)
+v.Local.sSQL.Set("SELECT concat(rtrim(PART),rtrim(location)) as PartLoc, Description FROM V_INVENTORY_MSTR;")
+F.Data.Dictionary.CreateFromSQL("dicDescription","conx",v.Local.sSQL)
+f.Data.DataTable.FillFromDictionary("dtInvStatus","dicDescription","PartLocation","Description")
+
+'Clean Up
+f.Data.Dictionary.Close("dicDescription")
+f.Data.DataTable.RemoveColumn("dtInvStatus","PartLocation")
+
+Program.Sub.Additional_Columns.End
+
+Program.Sub.format_GSGCMULTPCINVSTATUS.Start
+'Create grid view
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.AddGridviewFromDatatable("gvInvStatus","dtInvStatus")
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.MainView("gvInvStatus")
+
+'Main grid properties
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetGridviewProperty("gvInvStatus","MultiSelect",True)
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetGridviewProperty("gvInvStatus","AllowSort",True)
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetGridviewProperty("gvInvStatus","AllowFilter",True)
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetGridviewProperty("gvInvStatus","OptionsDetailShowDetailTabs",True)
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetGridviewProperty("gvInvStatus","OptionsViewShowGroupPanel",True)
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetGridviewProperty("gvInvStatus","OptionsMenuShowAutoFilterRowItem",True)
+
+'Part
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Part","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Part","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Part","MinWidth",180)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Part","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Part","Caption","Part")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Part","CellHAlignment","Left")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","PART","CellForeColor","Blue")
+
+'Description
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","MinWidth",250)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","Caption","Description")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","CellHAlignment","Left")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Description","VisibleIndex",2)
+
+'Location
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Location","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Location","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Location","MinWidth",50)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Location","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Location","Caption","Loc")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Location","CellHAlignment","Center")
+
+'lngth
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lngth","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lngth","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lngth","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lngth","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lngth","Caption","Length")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lngth","CellHAlignment","Center")
+
+'lengthft
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lengthft","Visible",False)
+
+'lengthin
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","lengthin","Visible",False)
+
+'on_hand
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","AllowEdit","False")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","ReadOnly","True")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","MinWidth",80)
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","HeaderHAlignment","Center")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","Caption","On Hand")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","CellHAlignment","Right")
+'gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","DisplayCustomNumeric","###,##0.00")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_hand","Visible",False)
+
+'on_handNoNull
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","Caption","On Hand")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","on_handNoNull","DisplayCustomNumeric","###,##0.00")
+
+'DecimalLength
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","DecimalLength","Visible",False)
+
+'qty_wo
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","AllowEdit","False")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","ReadOnly","True")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","MinWidth",80)
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","HeaderHAlignment","Center")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","Caption","On Order WO")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","CellHAlignment","Right")
+'gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","DisplayCustomNumeric","###,##0.00")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_wo","Visible",False)
+
+'qty_woNoNull
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","Caption","On Order WO")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_woNoNull","DisplayCustomNumeric","###,##0.00")
+
+'qty_reqd
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","AllowEdit","False")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","ReadOnly","True")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","MinWidth",80)
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","HeaderHAlignment","Center")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","Caption","Required")
+'GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","CellHAlignment","Right")
+'gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","DisplayCustomNumeric","###,##0.00")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqd","Visible",False)
+
+'qty_reqdNoNull
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","Caption","Required")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","qty_reqdNoNull","DisplayCustomNumeric","###,##0.00")
+
+'Net
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","Caption","Net")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Net","DisplayCustomNumeric","###,##0.00")
+
+'Available
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","Caption","Available Qty")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","Available","DisplayCustomNumeric","###,##0.00")
+
+'NetPieces
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","NetPieces","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","NetPieces","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","NetPieces","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","NetPieces","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","NetPieces","Caption","Net Pcs")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","NetPieces","CellHAlignment","Right")
+
+'AvailablePieces
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","AvailablePieces","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","AvailablePieces","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","AvailablePieces","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","AvailablePieces","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","AvailablePieces","Caption","Avail Pcs")
+GUI.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.SetColumnProperty("gvInvStatus","AvailablePieces","CellHAlignment","Right")
+
+f.Intrinsic.UI.CloseWaitDialog
+
+
+Program.Sub.format_GSGCMULTPCINVSTATUS.End
+
+Program.Sub.F_MULT_PC_INV_STATUS_Resize.Start
+	v.Local.iWidth.Declare
+	v.Local.iHeight.Declare
+
+'resize grid controls
+	F.Intrinsic.Math.Sub(V.Screen.F_MULT_PC_INV_STATUS.Width,340,v.Local.iWidth)
+	F.Intrinsic.Math.Sub(v.Screen.F_MULT_PC_INV_STATUS.Height,2265,V.Local.iHeight)
+	Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Size(V.Local.iWidth,v.Local.iHeight)
+	GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Size(v.Local.iWidth,v.Local.iHeight)
+	
+	'resize tab control
+	F.Intrinsic.Math.Sub(V.Screen.F_MULT_PC_INV_STATUS.Width,275,v.Local.iWidth)
+	F.Intrinsic.Math.Sub(v.Screen.F_MULT_PC_INV_STATUS.Height,1850,V.Local.iHeight)
+	Gui.F_MULT_PC_INV_STATUS.tabGrids.Size(V.Local.iWidth,v.Local.iHeight)
+Program.Sub.F_MULT_PC_INV_STATUS_Resize.End
+
+Program.Sub.GSGCMULTPCINVSTATUS_RowCellClick.Start
+V.Local.pSHP.Declare(String)
+V.Local.lSHP.Declare(String)
+V.Local.call.Declare(String)
+V.Local.sTemp.Declare(String)
+V.Local.sTempLine.Declare
+V.Local.bStaged.Declare
+
+
+F.Intrinsic.Control.SelectCase(V.Args.Column)
+
+	F.Intrinsic.Control.Case("Part")
+			F.Intrinsic.Control.CallSub(disablecontrols)
+			Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.GetCellValueByColumnName("gvInvStatus","PART",V.Args.RowIndex,V.Local.pSHP)
+			Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.GetCellValueByColumnName("gvInvStatus","LOCATION",V.Args.RowIndex,V.Local.lSHP)
+			F.Intrinsic.String.Concat(V.Local.pSHP,"!*!",V.Local.lSHP,"!*!","V",V.Local.call)
+			F.Global.General.CallWrappersync(300011,v.Local.call)
+			F.Intrinsic.Control.CallSub(enablecontrols)
+
+'	F.Intrinsic.Control.Case("QTY_ONHAND")
+'		Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.GetCellValueByColumnName("gvInvStatus","PART",V.Args.RowIndex,V.Local.pSHP)
+'		Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.GetCellValueByColumnName("gvInvStatus","LOCATION",V.Args.RowIndex,V.Local.lSHP)
+'		Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.GetCellValueByColumnName("gvInvStatus","DESCRIPTION",V.Args.RowIndex,V.Local.call)
+'		Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.GetCellValueByColumnName("gvInvStatus","QTY_ONHAND",V.Args.RowIndex,V.Local.sTemp)
+'		F.Intrinsic.Control.CallSub("subGridLoad_fgItem","Part",V.Local.pSHP,"Loc",V.Local.lSHP,"Desc",V.Local.call,"OnHand",V.Local.sTemp)
+'		F.Intrinsic.Control.ExitSub
+		
+F.Intrinsic.Control.EndSelect
+Program.Sub.GSGCMULTPCINVSTATUS_RowCellClick.End
+
+Program.Sub.Set_Context_Menus.Start
+'CONTEXT MENU FOR EXPORT - Multi Piece
+Gui.F_MULT_PC_INV_STATUS..ContextMenuCreate("ctxAll")
+Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.ContextMenuAttach("ctxAll")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuAddItem("ctxAll","Export",0,"Export")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuAddItem("ctxAll","New Customer",0,"Refresh")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuSetItemEventHandler("ctxAll","Export","MenuClickExport")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuSetItemEventHandler("ctxAll","New Customer","RefreshGrid")
+
+'CONTEXT MENU FOR EXPORT - Standard
+Gui.F_MULT_PC_INV_STATUS..ContextMenuCreate("ctxAllStd")
+Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.ContextMenuAttach("ctxAllStd")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuAddItem("ctxAllStd","Export",0,"Export")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuAddItem("ctxAllStd","New Customer",0,"Refresh")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuSetItemEventHandler("ctxAllStd","Export","MenuClickExportStandard")
+Gui.F_MULT_PC_INV_STATUS..ContextMenuSetItemEventHandler("ctxAllStd","New Customer","RefreshGrid")
+Program.Sub.Set_Context_Menus.End
+
+Program.Sub.MenuClickExport.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	
+	V.Local.sFileExport.Declare
+	V.Local.bExcel.Declare
+	V.Local.bFileLocked.Declare
+	V.Local.sMsg.Declare
+	V.Local.sControl.Declare
+	
+	V.Local.sControl.Set("GSGCMULTPCINVSTATUS")
+
+	F.Automation.MSExcel.CheckPresence(V.Local.bExcel)
+	F.Intrinsic.Control.If(V.Local.bExcel)
+		F.Intrinsic.String.Build("{0}\GAB_5229_{1}_Export-MultPc.xlsx",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+		F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+		F.Intrinsic.Control.If(V.Local.bFileLocked)
+			F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+			F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+		F.Intrinsic.Control.Else
+			Gui.F_MULT_PC_INV_STATUS.[V.Local.sControl].Export(V.Local.sFileExport,"xlsx")
+			F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}\GAB_5229_{1}_Export-MultPc.csv",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+		F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+		F.Intrinsic.Control.If(V.Local.bFileLocked)
+			F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+			F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+		F.Intrinsic.Control.Else
+			Gui.F_MULT_PC_INV_STATUS.[V.Local.sControl].Export(V.Local.sFileExport,"csv")
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End 
+	F.Intrinsic.Control.EndTry
+Program.Sub.MenuClickExport.End
+
+Program.Sub.RefreshGrid.Start
+'refresh grid data, and make sure all DT's are closed first
+f.Intrinsic.Control.CallSub(Serialize)
+gui.F_MULT_PC_INV_STATUS..Visible(False)
+f.Intrinsic.UI.InvokeWaitDialog("Refreshing...","Multi Piece Inv Status")
+f.Intrinsic.Control.If(v.DataTable.dtWOqty.exists)
+	f.Data.DataTable.Close("dtWOqty")
+f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.If(v.DataTable.dtInvStatus.exists)
+	f.Data.DataTable.Close("dtInvStatus")
+f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.If(v.DataTable.dtOnhand.Exists)
+	f.Data.DataTable.Close("dtOnhand")
+f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.If(v.DataTable.dtOrderReqs.Exists)
+	f.Data.DataTable.Close("dtOrderReqs")
+f.Intrinsic.Control.EndIf
+f.Intrinsic.Control.If(v.DataTable.dtStdInvStatus.Exists)
+	f.Data.DataTable.Close("dtStdInvStatus")
+f.Intrinsic.Control.EndIf
+
+'open connection
+f.ODBC.Connection!conx.openconnection(v.Ambient.PDSN,v.Ambient.PUser,v.Ambient.PPass)
+
+'Function.Intrinsic.Debug.InvokeDebugger
+
+'call subs
+f.Intrinsic.UI.InvokeWaitDialog("Processing...","Multi Piece Inv Status")
+f.Intrinsic.UI.ChangeWaitStatus("Getting Sales Order Info...",1.5,0,10)
+f.Intrinsic.Control.CallSub(Load_dtOrderReqs)
+f.Intrinsic.UI.ChangeWaitStatus("Getting Onhand Info...",3,0,10)
+f.Intrinsic.Control.CallSub(Load_dtOnhand)
+f.Intrinsic.UI.ChangeWaitStatus("Getting Work Order Info...",4.5,0,10)
+f.Intrinsic.Control.CallSub(Load_dtWoSupply)
+f.Intrinsic.Control.CallSub(Load_dtWoReqs)
+f.Intrinsic.UI.ChangeWaitStatus("Joining Data...",6,0,10)
+f.Intrinsic.Control.CallSub(merge_DTs)
+f.Intrinsic.Control.CallSub(load_dtstdinvstatus)
+f.Intrinsic.UI.ChangeWaitStatus("Adding Columns...",7.5,0,10)
+f.Intrinsic.Control.CallSub(Additional_Columns)
+F.Intrinsic.UI.ChangeWaitStatus("Loading Grid...",9,0,10)
+f.Intrinsic.Control.CallSub(format_GSGCMULTPCINVSTATUS)
+f.Intrinsic.Control.CallSub(format_GSGCSTANDARDINVSTATUS)
+f.Intrinsic.Control.CallSub(Deserialize)
+gui.F_MULT_PC_INV_STATUS..Visible(true)
+
+'close connection
+f.ODBC.Connection!conx.Close
+Program.Sub.RefreshGrid.End
+
+Program.Sub.Serialize.Start
+	F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	
+	V.Local.sSerialize.Declare
+	
+	'gvInvStatus
+	Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Serialize("gvInvStatus",V.Local.sSerialize)
+	F.Global.Registry.AddValue(V.Caller.User,V.Caller.CompanyCode,"gvInvStatus",5228,1000,False,"Serialize",False,0,-999.0,1/1/1980,12:00:00 AM,V.Local.sSerialize)
+	
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+
+	F.Intrinsic.Control.EndTry
+Program.Sub.Serialize.End
+
+Program.Sub.Deserialize.Start
+	F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	
+	V.Local.sSerialize.Declare
+	
+	'gvInvStatus
+	F.Global.Registry.ReadValue(V.Caller.User,V.Caller.CompanyCode,"gvInvStatus",5228,1000,6,"",V.Local.sSerialize)
+	F.Intrinsic.Control.If(V.Local.sSerialize.Trim,<>,"")
+		Gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Deserialize(V.Local.sSerialize)
+	F.Intrinsic.Control.EndIf
+
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End
+
+	F.Intrinsic.Control.EndTry
+Program.Sub.Deserialize.End
+
+Program.Sub.tabGrids_Click.Start
+Program.Sub.tabGrids_Click.End
+
+Program.Sub.Load_dtStdInvStatus.Start
+v.Local.sSQL.Declare
+
+'SET SQL STATEMENT.  PRODUCT LINES EXCLUDED ARE MULTI PIECE.  01, 06, 07
+v.Local.sSQL.Set("SELECT PART, LOCATION, DESCRIPTION, ISNULL(QTY_ONHAND,0) AS ONHAND, ISNULL(QTY_ONORDER_PO,0) AS PO, ISNULL(QTY_ONORDER_WO,0) AS WO, ISNULL(QTY_REQUIRED,0) AS REQD FROM V_INVENTORY_ALL WHERE PRODUCT_LINE NOT IN ('01','06','07');")
+
+'CREATE DATATABLE
+F.Data.DataTable.CreateFromSQL("dtStdInvStatus","conx",v.Local.sSQL,True)
+
+'ADD EXPRESSION COLUMNS
+F.Data.DataTable.AddExpressionColumn("dtStdInvStatus","Net","LONG","ONHAND + WO + PO - REQD")
+F.Data.DataTable.AddExpressionColumn("dtStdInvStatus","Available","LONG","ONHAND - REQD")
+
+'Create grid view
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.AddGridviewFromDatatable("gvStdInvStatus","dtStdInvStatus")
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.MainView("gvStdInvStatus")
+Program.Sub.Load_dtStdInvStatus.End
+
+Program.Sub.format_GSGCSTANDARDINVSTATUS.Start
+'part, location, description, onhand, wo, po, reqd
+'Main grid properties
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetGridviewProperty("gvStdInvStatus","MultiSelect",True)
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetGridviewProperty("gvStdInvStatus","AllowSort",True)
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetGridviewProperty("gvStdInvStatus","AllowFilter",True)
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetGridviewProperty("gvStdInvStatus","OptionsDetailShowDetailTabs",True)
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetGridviewProperty("gvStdInvStatus","OptionsViewShowGroupPanel",True)
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetGridviewProperty("gvStdInvStatus","OptionsMenuShowAutoFilterRowItem",True)
+
+'Part
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Part","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Part","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Part","MinWidth",180)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Part","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Part","Caption","Part")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Part","CellHAlignment","Left")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","PART","CellForeColor","Blue")
+
+'Description
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","MinWidth",250)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","Caption","Description")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","CellHAlignment","Left")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Description","VisibleIndex",2)
+
+'Location
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Location","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Location","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Location","MinWidth",50)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Location","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Location","Caption","Loc")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Location","CellHAlignment","Center")
+
+'onhand
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","Caption","On Hand")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","onhand","DisplayCustomNumeric","###,##0.00")
+
+'wo
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","Caption","On Order WO")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","wo","DisplayCustomNumeric","###,##0.00")
+
+'reqd
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","Caption","Required")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","reqd","DisplayCustomNumeric","###,##0.00")
+
+'Net
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","Caption","Net")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Net","DisplayCustomNumeric","###,##0.00")
+
+'Available
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","AllowEdit","False")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","ReadOnly","True")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","MinWidth",80)
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","HeaderHAlignment","Center")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","Caption","Available Qty")
+GUI.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","CellHAlignment","Right")
+gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.SetColumnProperty("gvStdInvStatus","Available","DisplayCustomNumeric","###,##0.00")
+
+Program.Sub.format_GSGCSTANDARDINVSTATUS.End
+
+Program.Sub.GSGCSTANDARDINVSTATUS_RowCellClick.Start
+V.Local.pSHP.Declare(String)
+V.Local.lSHP.Declare(String)
+V.Local.call.Declare(String)
+V.Local.sTemp.Declare(String)
+V.Local.sTempLine.Declare
+V.Local.bStaged.Declare
+
+
+F.Intrinsic.Control.SelectCase(V.Args.Column)
+
+	F.Intrinsic.Control.Case("PART")
+			F.Intrinsic.Control.CallSub(disablecontrols)
+			Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.GetCellValueByColumnName("gvStdInvStatus","PART",V.Args.RowIndex,V.Local.pSHP)
+			Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.GetCellValueByColumnName("gvStdInvStatus","LOCATION",V.Args.RowIndex,V.Local.lSHP)
+			F.Intrinsic.String.Concat(V.Local.pSHP,"!*!",V.Local.lSHP,"!*!","V",V.Local.call)
+			F.Global.General.CallWrappersync(300011,v.Local.call)
+			F.Intrinsic.Control.CallSub(enablecontrols)
+
+'	F.Intrinsic.Control.Case("QTY_ONHAND")
+'		Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.GetCellValueByColumnName("gvStdInvStatus","PART",V.Args.RowIndex,V.Local.pSHP)
+'		Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.GetCellValueByColumnName("gvStdInvStatus","LOCATION",V.Args.RowIndex,V.Local.lSHP)
+'		Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.GetCellValueByColumnName("gvStdInvStatus","DESCRIPTION",V.Args.RowIndex,V.Local.call)
+'		Gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.GetCellValueByColumnName("gvStdInvStatus","QTY_ONHAND",V.Args.RowIndex,V.Local.sTemp)
+'		F.Intrinsic.Control.CallSub("subGridLoad_fgItem","Part",V.Local.pSHP,"Loc",V.Local.lSHP,"Desc",V.Local.call,"OnHand",V.Local.sTemp)
+'		F.Intrinsic.Control.ExitSub
+		
+F.Intrinsic.Control.EndSelect
+Program.Sub.GSGCSTANDARDINVSTATUS_RowCellClick.End
+
+Program.Sub.MenuClickExportStandard.Start
+F.Intrinsic.Control.Try
+	V.Local.sError.Declare
+	
+	V.Local.sFileExport.Declare
+	V.Local.bExcel.Declare
+	V.Local.bFileLocked.Declare
+	V.Local.sMsg.Declare
+	V.Local.sControl.Declare
+	
+	V.Local.sControl.Set("GSGCSTANDARDINVSTATUS")
+
+	F.Automation.MSExcel.CheckPresence(V.Local.bExcel)
+	F.Intrinsic.Control.If(V.Local.bExcel)
+		F.Intrinsic.String.Build("{0}\GAB_5229_{1}_Export-Std.xlsx",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+		F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+		F.Intrinsic.Control.If(V.Local.bFileLocked)
+			F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+			F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+		F.Intrinsic.Control.Else
+			Gui.F_MULT_PC_INV_STATUS.[V.Local.sControl].Export(V.Local.sFileExport,"xlsx")
+			F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+		F.Intrinsic.Control.EndIf
+	F.Intrinsic.Control.Else
+		F.Intrinsic.String.Build("{0}\GAB_5229_{1}_Export-Std.csv",V.Caller.LocalGssTempDir,V.Local.sControl,V.Local.sFileExport)
+		F.Intrinsic.File.IsFileLocked(V.Local.sFileExport,V.Local.bFileLocked)
+		F.Intrinsic.Control.If(V.Local.bFileLocked)
+			F.Intrinsic.String.Build("File is already open. Please close and export again.{0}File: {1}",V.Ambient.NewLine,V.Local.sFileExport,V.Local.sMsg)
+			F.Intrinsic.UI.Msgbox(V.Local.sMsg,"File In Use")
+		F.Intrinsic.Control.Else
+			Gui.F_MULT_PC_INV_STATUS.[V.Local.sControl].Export(V.Local.sFileExport,"csv")
+		F.Intrinsic.Control.EndIf
+		F.Intrinsic.Task.ShellExec(0,"",V.Local.sFileExport,"","",1)
+	F.Intrinsic.Control.EndIf
+	
+	F.Intrinsic.Control.Catch
+		F.Intrinsic.String.Build("Project: {0}{1}{1}Subroutine: {2}{1}Error Occurred {3} with description {4}{1}{1}GAB Version: {5}",V.Ambient.ScriptPath,V.Ambient.Newline,V.Ambient.CurrentSubroutine,V.Ambient.ErrorNumber,V.Ambient.ErrorDescription,V.Ambient.GABVersion,V.Local.sError)
+		F.Intrinsic.UI.Msgbox(V.Local.sError)
+		F.Intrinsic.Control.End 
+	F.Intrinsic.Control.EndTry
+Program.Sub.MenuClickExportStandard.End
+
+Program.Sub.enablecontrols.Start
+	gui.F_MULT_PC_INV_STATUS.tabGrids.Enabled(True)
+	gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Visible(True)
+	gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Visible(True)
+Program.Sub.enablecontrols.End
+
+Program.Sub.disablecontrols.Start
+	gui.F_MULT_PC_INV_STATUS.tabGrids.Enabled(false)
+	gui.F_MULT_PC_INV_STATUS.GSGCMULTPCINVSTATUS.Visible(False)
+	gui.F_MULT_PC_INV_STATUS.GSGCSTANDARDINVSTATUS.Visible(False)
+Program.Sub.disablecontrols.End
+
+Program.Sub.Comments.Start
+${$0$}$$}$$}$12:00:00 AM$}$False
+Program.Sub.Comments.End
